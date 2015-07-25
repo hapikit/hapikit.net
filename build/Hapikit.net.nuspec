@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>Hapikit.net</id>
+        <version>0.1.0-alpha</version>
+        <authors>Darrel Miller</authors>
+        <owners>Darrel Miller</owners>
+        <projectUrl>https://github.com/hapikit/hapikit.net</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Toolkit for building HTTP API Client Libraries</description>
+        <releaseNotes><![CDATA[
+            For full release notes see https://github.com/hapikit/hapikit.net/blob/master/ReleaseNotes.md
+            ]]></releaseNotes>
+        <dependencies>
+
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\artifacts\lib\**\Hapikit.*.dll" target="lib" />
+    </files>
+</package>

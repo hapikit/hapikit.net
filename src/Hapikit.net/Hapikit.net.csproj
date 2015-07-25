@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <MinimumVisualStudioVersion>10.0</MinimumVisualStudioVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F79D75CD-978A-4021-8B24-56FD1E21CD17}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Hapikit</RootNamespace>
+    <AssemblyName>Hapikit.net</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Profile111</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>4.0</OldToolsVersion>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <NuGetPackageImportStamp>c711791a</NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Credentials\AuthMessageHandler.cs" />
+    <Compile Include="Credentials\CredentialService.cs" />
+    <Compile Include="Credentials\BasicCredentials.cs" />
+    <Compile Include="Credentials\BearerCredentials.cs" />
+    <Compile Include="Credentials\HttpCredentialCache.cs" />
+    <Compile Include="Credentials\HttpCredentials.cs" />
+    <Compile Include="Cache\CacheEntry.cs" />
+    <Compile Include="Cache\CacheKey.cs" />
+    <Compile Include="Cache\CacheQueryResult.cs" />
+    <Compile Include="Cache\HttpCache.cs" />
+    <Compile Include="Cache\HttpCacheHandler.cs" />
+    <Compile Include="Cache\IContentStore.cs" />
+    <Compile Include="Cache\InMemoryContentStore.cs" />
+    <Compile Include="Links\ILink.cs" />
+    <Compile Include="Links\ILinkFactory.cs" />
+    <Compile Include="Links\IRequestFactory.cs" />
+    <Compile Include="Links\IResponseHandler.cs" />
+    <Compile Include="Links\Hint.cs" />
+    <Compile Include="Links\HintFactory.cs" />
+    <Compile Include="HttpClientExtensions.cs" />
+    <Compile Include="TaskExtensions.cs" />
+    <Compile Include="Links\IANA\Hints.cs" />
+    <Compile Include="Links\IANA\Links.cs" />
+    <Compile Include="Links\Link.cs" />
+    <Compile Include="Links\LinkAttributes.cs" />
+    <Compile Include="Links\LinkExtensions.cs" />
+    <Compile Include="HttpHeaderExtensions.cs" />
+    <Compile Include="Links\LinkHeaderParser.cs" />
+    <Compile Include="Links\LinkHelper.cs" />
+    <Compile Include="Links\LinkRelationTypeAttribute.cs" />
+    <Compile Include="Links\ILinkExtractor.cs" />
+    <Compile Include="Links\ILinkFactoryExtensions.cs" />
+    <Compile Include="Links\LinkFactory.cs" />
+    <Compile Include="RequestBuilders\DefaultRequestBuilder.cs" />
+    <Compile Include="RequestBuilders\DelegatingRequestBuilder.cs" />
+    <Compile Include="RequestBuilders\InlineRequestBuilder.cs" />
+    <Compile Include="RequestBuilders\LinkParameterAttribute.cs" />
+    <Compile Include="ResponseHandlers\DelegatingResponseHandler.cs" />
+    <Compile Include="ResponseHandlers\HttpResponseMachine.cs" />
+    <Compile Include="ResponseHandlers\InlineResponseHandler.cs" />
+    <Compile Include="StringBuilderExtensions.cs" />
+    <Compile Include="UriExtensions.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RedirectHandler.cs" />
+    <Compile Include="Templates\OperatorInfo.cs" />
+    <Compile Include="Templates\Result.cs" />
+    <Compile Include="Templates\UriTemplate.cs" />
+    <Compile Include="Templates\UriTemplateExtensions.cs" />
+    <Compile Include="Templates\VarSpec.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
