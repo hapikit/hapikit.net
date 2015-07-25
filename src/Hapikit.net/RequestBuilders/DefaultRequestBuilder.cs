@@ -29,7 +29,7 @@ namespace Hapikit.RequestBuilders
                     {
                         object value = prop.Value.PropertyInfo.GetValue(link, null);
                         object defaultValue = GetDefault(prop.Value);
-                        if (!value.Equals(defaultValue))
+                        if (value != null && !value.Equals(defaultValue))
                         {
                             link.Template.AddParameter(prop.Key, value);
                         }

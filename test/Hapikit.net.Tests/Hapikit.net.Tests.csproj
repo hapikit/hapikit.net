@@ -86,7 +86,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Hapikit.net\Hapikit.net.csproj">
       <Project>{f79d75cd-978a-4021-8b24-56fd1e21cd17}</Project>
-      <Name>Auth</Name>
+      <Name>Hapikit.net</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
