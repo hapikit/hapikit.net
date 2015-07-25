@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Hapikit.ResponseHandlers;
 using haveibeenpwnd.net.hapisdk;
 using Hapikit;
 using Xunit;
@@ -42,13 +43,31 @@ namespace haveibeenpwnd.tests
                 Account = "darrel@tavis.ca"
             };
 
-            var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("hapikit-sdk-tests", "1.0"));
+            var isPwnd = new Model<bool>();
 
-            var response = await httpClient.FollowLinkAsync(breachAccountLink);
+            var machine = AttachResponseMachine(isPwnd);
 
-            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            await _httpClient.FollowLinkAsync(breachAccountLink,machine);
+           
 
+            Assert.False(isPwnd.Value);
+            
+        }
+
+        private static HttpResponseMachine<Model<bool>> AttachResponseMachine(Model<bool> isPwnd)
+        {
+            var machine = new HttpResponseMachine<Model<bool>>(isPwnd);
+            machine.AddResponseHandler(async (m, l, r) =>
+            {
+                m.Value = false;
+                return r;
+            }, HttpStatusCode.NotFound);
+            machine.AddResponseHandler(async (m, l, r) =>
+            {
+                m.Value = true;
+                return r;
+            }, HttpStatusCode.OK);
+            return machine;
         }
 
         [Fact]
@@ -61,14 +80,31 @@ namespace haveibeenpwnd.tests
                 TruncateResponse = true
             };
 
-            var response = await _httpClient.FollowLinkAsync(breachAccountLink);
+
+            var isPwnd = new Model<bool>();
+
+            var machine = AttachResponseMachine(isPwnd);
+
+            var response = await _httpClient.FollowLinkAsync(breachAccountLink,machine);
+
+            Assert.True(isPwnd.Value);
+
+            var result = await response.Content.ReadAsStringAsync();
+
+        }
+
+        [Fact]
+        public async Task GetDataClasses()
+        {
+            var dataClassLink = new DataClassLink();
+
+            var response = await _httpClient.FollowLinkAsync(dataClassLink);
 
             Assert.True(response.IsSuccessStatusCode);
 
             var result = await response.Content.ReadAsStringAsync();
 
         }
-
         [Fact]
         public async Task GetBreach()
         {
@@ -86,4 +122,6 @@ namespace haveibeenpwnd.tests
 
         }
     }
+
+    
 }
