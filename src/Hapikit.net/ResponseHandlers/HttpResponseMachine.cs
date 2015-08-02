@@ -67,6 +67,7 @@ namespace Hapikit.ResponseHandlers
                     Score = (h.ContentType != null ? 8 : 0) + (h.LinkRelation != null ? 2 : 0) + (h.Profile != null ? 2 : 0)
                 });
 
+            if (!handlerResults.Any()) throw new Exception(String.Format("No handler configured for response: Status Code {0}, Media Type {1}, Link Relation {2}", responseHandlerKey.StatusCode, responseHandlerKey.ContentType, responseHandlerKey.LinkRelation));
             var handler = handlerResults.OrderByDescending(h => h.Score).First();
             return handler;
         }
