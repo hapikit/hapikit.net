@@ -26,49 +26,44 @@ namespace LinkTests
         {
             _loginFormModel = model;
             Machine = new HttpResponseMachine();
-            Machine.AddResponseHandler(LoginSuccessful, HttpStatusCode.OK, linkRelation: "login", contentType: null, profile: null);
-            Machine.AddResponseHandler(LoginFailed, HttpStatusCode.Unauthorized, linkRelation: "login", contentType: null, profile: null);
-            Machine.AddResponseHandler(LoginForbidden, HttpStatusCode.Forbidden, linkRelation: "login", contentType: null, profile: null);
-            Machine.AddResponseHandler(FailedRequest, HttpStatusCode.BadRequest, linkRelation: "login", contentType: null, profile: null);
-            Machine.AddResponseHandler(ResetForm, HttpStatusCode.OK, linkRelation: "reset", contentType: null, profile: null);
+            Machine.AddResponseAction(LoginSuccessful, HttpStatusCode.OK, linkRelation: "login", contentType: null, profile: null);
+            Machine.AddResponseAction(LoginFailed, HttpStatusCode.Unauthorized, linkRelation: "login", contentType: null, profile: null);
+            Machine.AddResponseAction(LoginForbidden, HttpStatusCode.Forbidden, linkRelation: "login", contentType: null, profile: null);
+            Machine.AddResponseAction(FailedRequest, HttpStatusCode.BadRequest, linkRelation: "login", contentType: null, profile: null);
+            Machine.AddResponseAction(ResetForm, HttpStatusCode.OK, linkRelation: "reset", contentType: null, profile: null);
 
         }
 
-        public async Task<HttpResponseMessage> LoginSuccessful(string linkrelation, HttpResponseMessage response)
+        public async Task LoginSuccessful(string linkrelation, HttpResponseMessage response)
         {
             _loginFormModel.StatusMessage = "Successfully logged in";
             
-            return response;
         }
 
-        public async Task<HttpResponseMessage> ResetForm(string linkrelation, HttpResponseMessage response)
+        public async Task ResetForm(string linkrelation, HttpResponseMessage response)
         {
             _loginFormModel.UserName = "";
             _loginFormModel.Password = "";
 
-            return response;
         }
 
 
-        public async Task<HttpResponseMessage> LoginFailed(string linkrelation, HttpResponseMessage response)
+        public async Task LoginFailed(string linkrelation, HttpResponseMessage response)
         {
             _loginFormModel.StatusMessage = "Credentials invalid";
 
-            return response;
         }
 
-        public async Task<HttpResponseMessage> LoginForbidden(string linkrelation, HttpResponseMessage response)
+        public async Task LoginForbidden(string linkrelation, HttpResponseMessage response)
         {
             _loginFormModel.StatusMessage = "Insufficient Permissions";
 
-            return response;
         }
 
-        public async Task<HttpResponseMessage> FailedRequest(string linkrelation, HttpResponseMessage response)
+        public async Task FailedRequest(string linkrelation, HttpResponseMessage response)
         {
             _loginFormModel.StatusMessage = "Unable to login -  status code " + response.StatusCode;
 
-            return response;
         }  
     }
     public class ModelMachineControllerTests
