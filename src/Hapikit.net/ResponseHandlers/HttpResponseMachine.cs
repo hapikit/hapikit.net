@@ -253,11 +253,13 @@ namespace Hapikit.ResponseHandlers
                 {
                     key.ContentType = response.Content.Headers.ContentType;
                     // Hunt for profile (m/t Parameters, Link Header)
-
-                    var profile = key.ContentType.Parameters.FirstOrDefault(p => p.Name == "profile");
-                    if (profile != null)
+                    if (key.ContentType != null)
                     {
-                        key.Profile = new Uri(profile.Value.Substring(1, profile.Value.Length - 2));
+                        var profile = key.ContentType.Parameters.FirstOrDefault(p => p.Name == "profile");
+                        if (profile != null)
+                        {
+                            key.Profile = new Uri(profile.Value.Substring(1, profile.Value.Length - 2));
+                        }
                     }
                 }
                 key.LinkRelation = linkRelation;
