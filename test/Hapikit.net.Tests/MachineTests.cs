@@ -147,12 +147,109 @@ namespace LinkTests
         }
 
         [Fact]
-        public async Task AddMediaTypeTranslator()
+        public async Task DispatchBasedOnStatusCodeMediaTypeAndProfile()
         {
-            JToken value = null;
+            Person testPerson = null;
             
             var machine = new HttpResponseMachine();
+
+            // Define method to translate response body into DOM for specified media type 
+            machine.AddMediaTypeParser<JToken>("application/json", async (content) =>
+            {
+                var stream = await content.ReadAsStreamAsync();
+                return JToken.Load(new JsonTextReader(new StreamReader(stream)));
+            });
+
+            // Define method to translate media type DOM into application domain object instance based on profile
+            machine.AddProfileParser<JToken, Person>(new Uri("http://example.org/person"), (jt) =>
+            {
+                var person = new Person();
+                var jobject = (JObject)jt;
+                person.FirstName = (string)jobject["FirstName"];
+                person.LastName = (string)jobject["LastName"];
+
+                return person;
+            });
+
+            // Define action in HttpResponseMachine for all responses that return 200 OK and can be translated somehow to a Person
+            machine.AddResponseAction<Person>((l, p) => { testPerson = p; }, HttpStatusCode.OK);
+
+            // Create a sample body
+            var jsonContent = new StringContent("{ \"FirstName\" : \"Bob\", \"LastName\" : \"Bang\"  }");
+            jsonContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            jsonContent.Headers.ContentType.Parameters.Add(new NameValueHeaderValue("profile", "\"http://example.org/person\""));
             
+            // Create a sample response 
+            var httpResponseMessage = new HttpResponseMessage()
+            {
+                Content = jsonContent
+            };
+
+            // Allow machine to dispatch response
+            machine.HandleResponseAsync("", httpResponseMessage);
+
+            Assert.NotNull(testPerson);
+            Assert.Equal("Bob", testPerson.FirstName);
+            Assert.Equal("Bang", testPerson.LastName);
+        }
+
+
+        [Fact]
+        public async Task DispatchBasedOnStatusCodeAndLinkRelationAndParseProfile()
+        {
+            Person testPerson = null;
+
+            var machine = new HttpResponseMachine();
+
+            // Define method to translate response body into DOM for specified media type 
+            machine.AddMediaTypeParser<JToken>("application/json", async (content) =>
+            {
+                var stream = await content.ReadAsStreamAsync();
+                return JToken.Load(new JsonTextReader(new StreamReader(stream)));
+            });
+
+            // Define method to translate media type DOM into application domain object instance based on profile
+            machine.AddProfileParser<JToken, Person>(new Uri("http://example.org/person"), (jt) =>
+            {
+                var person = new Person();
+                var jobject = (JObject)jt;
+                person.FirstName = (string)jobject["FirstName"];
+                person.LastName = (string)jobject["LastName"];
+
+                return person;
+            });
+
+            // Define action in HttpResponseMachine for all responses that return 200 OK and can be translated somehow to a Person
+            machine.AddResponseAction<Person>((l, p) => { testPerson = p; }, HttpStatusCode.OK);
+
+            // Create a sample body
+            var jsonContent = new StringContent("{ \"FirstName\" : \"Bob\", \"LastName\" : \"Bang\"  }");
+            jsonContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            jsonContent.Headers.ContentType.Parameters.Add(new NameValueHeaderValue("profile", "\"http://example.org/person\""));
+
+            // Create a sample response 
+            var httpResponseMessage = new HttpResponseMessage()
+            {
+                Content = jsonContent
+            };
+
+            // Allow machine to dispatch response
+            machine.HandleResponseAsync("", httpResponseMessage);
+
+            Assert.NotNull(testPerson);
+            Assert.Equal("Bob", testPerson.FirstName);
+            Assert.Equal("Bang", testPerson.LastName);
+        }
+
+
+
+        [Fact]
+        public async Task DispatchBasedOnMediaTypeWithParser()
+        {
+            JToken value = null;
+
+            var machine = new HttpResponseMachine();
+
             machine.AddMediaTypeParser<JToken>("application/json", async (content) =>
             {
                 var stream = await content.ReadAsStreamAsync();
@@ -171,5 +268,11 @@ namespace LinkTests
             Assert.NotNull(value);
         }
 
+    }
+
+    public class Person
+    {
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
     }
 }

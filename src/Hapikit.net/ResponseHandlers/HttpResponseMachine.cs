@@ -41,7 +41,7 @@ namespace Hapikit.ResponseHandlers
                 {
                     this.AddResponseAction(async (m, l, r) =>
                     {
-                        var mt = parserInfo.MediaTypeParser.Parse(r.Content);
+                        var mt = await parserInfo.MediaTypeParser.Parse(r.Content);
                         var target = (Target)parserInfo.ProfileParser.Parse(mt);
                         responseAction(l, target);
 
@@ -102,7 +102,7 @@ namespace Hapikit.ResponseHandlers
 
             var handlerResults = statusHandlers.Where(h => h.StatusCode == responseActionKey.StatusCode
                                                            && (h.ContentType == null ||
-                                                            h.ContentType.Equals(responseActionKey.ContentType))
+                                                            h.ContentType.MediaType.Equals(responseActionKey.ContentType.MediaType))
                                                            && (h.Profile == null || h.Profile == responseActionKey.Profile)
                                                            && (String.IsNullOrEmpty(h.LinkRelation) ||
                                                             h.LinkRelation == responseActionKey.LinkRelation))
@@ -194,6 +194,7 @@ namespace Hapikit.ResponseHandlers
 
         private class ActionKey
         {
+      
             public ActionKey()
             {
 
@@ -206,6 +207,12 @@ namespace Hapikit.ResponseHandlers
                 {
                     ContentType = response.Content.Headers.ContentType;
                     // Hunt for profile (m/t Parameters, Link Header)
+                    
+                    var profile = ContentType.Parameters.FirstOrDefault(p => p.Name == "profile");
+                    if (profile != null)
+                    {
+                        Profile = new Uri(profile.Value.Substring(1,profile.Value.Length -2));
+                    }
                 }
                 LinkRelation = linkRelation;
             }
