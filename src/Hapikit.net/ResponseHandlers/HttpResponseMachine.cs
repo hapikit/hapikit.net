@@ -30,9 +30,9 @@ namespace Hapikit.ResponseHandlers
 
             if (!mediaTypeParsers.Any())
             {
-                // Find Profile parsers for the target type
-                var doubleParsers = _ProfileParsers.Values
-                    .Where(pi => pi.TargetType == typeof(Target))
+                // Find AppSemantic parsers for the target type
+                var doubleParsers = _AppSemanticParsers.Values
+                    .Where(pi => pi.TargetType == typeof(Target) && (linkRelation == null || linkRelation == pi.LinkRelation))
                     .SelectMany(
                                     pp=> _MediaTypeParsers.Values.Where(pi => pi.TargetType == pp.SourceType)
                                         .Select(mt => new { MediaTypeParser = mt, ProfileParser = pp }));
@@ -45,7 +45,7 @@ namespace Hapikit.ResponseHandlers
                         var target = (Target)parserInfo.ProfileParser.Parse(mt);
                         responseAction(l, target);
 
-                    }, statusCode, linkRelation: linkRelation, contentType: new MediaTypeHeaderValue(parserInfo.MediaTypeParser.MediaType),profile: parserInfo.ProfileParser.Profile);
+                    }, statusCode, linkRelation: parserInfo.ProfileParser.LinkRelation, contentType: new MediaTypeHeaderValue(parserInfo.MediaTypeParser.MediaType),profile: parserInfo.ProfileParser.Profile);
 
                 }
                
@@ -69,9 +69,10 @@ namespace Hapikit.ResponseHandlers
     public class HttpResponseMachine<T> : IResponseHandler
     {
         private readonly T _Model;
-        private readonly List<ActionKey> _ResponseActions = new List<ActionKey>();
+        private readonly List<ActionRegistration> _ResponseActions = new List<ActionRegistration>();
         protected Dictionary<string, ParserInfo> _MediaTypeParsers = new Dictionary<string, ParserInfo>();
-        protected Dictionary<Uri, ProfileParserInfo> _ProfileParsers = new Dictionary<Uri, ProfileParserInfo>();
+        protected Dictionary<string, AppSemanticsParserInfo> _AppSemanticParsers = new Dictionary<string, AppSemanticsParserInfo>();
+
         
         public delegate Task ResponseAction<T>(T clientstate, string linkRelation, HttpResponseMessage response);
 
@@ -82,7 +83,7 @@ namespace Hapikit.ResponseHandlers
 
         public async Task<HttpResponseMessage> HandleResponseAsync(string linkrelation, HttpResponseMessage response)
         {
-            var actionKey = new ActionKey(response, linkrelation);
+            var actionKey = new ActionRegistration(response, linkrelation);
 
             var selectedAction = FindBestMatchAction(actionKey);
 
@@ -91,30 +92,35 @@ namespace Hapikit.ResponseHandlers
             return response;
         }
 
-        private HandlerResult FindBestMatchAction(ActionKey responseActionKey)
+        private HandlerResult FindBestMatchAction(ActionRegistration responseActionRegistration)
         {
-            var statusHandlers = _ResponseActions.Where(h => h.StatusCode == responseActionKey.StatusCode);
-            if (!statusHandlers.Any())
+            // Filter Actions to only include those that match the status code
+            var actionsByStatus = _ResponseActions.Where(h => h.StatusCode == responseActionRegistration.StatusCode);
+
+            // If there aren't any, then match with the default status code X00 for that class
+            if (!actionsByStatus.Any())
             {
-                responseActionKey.StatusCode = GetDefaultStatusCode(responseActionKey.StatusCode);
+                responseActionRegistration.StatusCode = GetDefaultStatusCode(responseActionRegistration.StatusCode);
             }
 
 
-            var handlerResults = statusHandlers.Where(h => h.StatusCode == responseActionKey.StatusCode
+            var candidateActions = actionsByStatus.Where(h => h.StatusCode == responseActionRegistration.StatusCode
                                                            && (h.ContentType == null ||
-                                                            h.ContentType.MediaType.Equals(responseActionKey.ContentType.MediaType))
-                                                           && (h.Profile == null || h.Profile == responseActionKey.Profile)
+                                                            h.ContentType.MediaType.Equals(responseActionRegistration.ContentType.MediaType))
+                                                           && (h.Profile == null || h.Profile == responseActionRegistration.Profile)
                                                            && (String.IsNullOrEmpty(h.LinkRelation) ||
-                                                            h.LinkRelation == responseActionKey.LinkRelation))
+                                                            h.LinkRelation == responseActionRegistration.LinkRelation))
                 .Select(h => new HandlerResult()
                 {
                     ResponseAction = h.ResponseAction,
                     Score = (h.ContentType != null ? 8 : 0) + (h.LinkRelation != null ? 2 : 0) + (h.Profile != null ? 2 : 0)
-                });
+                }).ToList();
 
-            if (!handlerResults.Any()) throw new Exception(String.Format("No handler configured for response: Status Code {0}, Media Type {1}, Link Relation {2}", responseActionKey.StatusCode, responseActionKey.ContentType, responseActionKey.LinkRelation));
-            var handler = handlerResults.OrderByDescending(h => h.Score).First();
-            return handler;
+            if (!candidateActions.Any()) throw new Exception(String.Format("No handler configured for response: Status Code {0}, Media Type {1}, Link Relation {2}", responseActionRegistration.StatusCode, responseActionRegistration.ContentType, responseActionRegistration.LinkRelation));
+
+            // Select the best match based on Score
+            var selectedAction = candidateActions.OrderByDescending(h => h.Score).First();
+            return selectedAction;
         }
         private HttpStatusCode GetDefaultStatusCode(HttpStatusCode httpStatusCode)
         {
@@ -143,7 +149,7 @@ namespace Hapikit.ResponseHandlers
 
        public void AddResponseAction(ResponseAction<T> responseAction, HttpStatusCode statusCode, string linkRelation = null, MediaTypeHeaderValue contentType = null, Uri profile = null)
         {
-            var key = new ActionKey()
+            var key = new ActionRegistration()
             {
                 StatusCode = statusCode,
                 ContentType = contentType,
@@ -166,7 +172,7 @@ namespace Hapikit.ResponseHandlers
 
        public void AddProfileParser<Source,Target>(Uri profile, Func<Source, Target> translator) where Target : class
        {
-           _ProfileParsers[profile] = new ProfileParserInfo
+           _AppSemanticParsers[profile.AbsoluteUri] = new AppSemanticsParserInfo
            {
                Profile = profile,
                SourceType = typeof(Source),
@@ -175,6 +181,16 @@ namespace Hapikit.ResponseHandlers
            };
        }
 
+       public void AddLinkRelationParser<Source, Target>(string linkrelation, Func<Source, Target> translator) where Target : class
+       {
+           _AppSemanticParsers[linkrelation] = new AppSemanticsParserInfo
+           {
+               LinkRelation = linkrelation,
+               SourceType = typeof(Source),
+               TargetType = typeof(Target),
+               Parse = (s) => translator((Source)s)
+           };
+       }
     
         protected struct ParserInfo
         {
@@ -184,23 +200,24 @@ namespace Hapikit.ResponseHandlers
             public Func<HttpContent, Task<object>> Parse;
         }
         
-        protected struct ProfileParserInfo
+        protected struct AppSemanticsParserInfo
         {
             public Uri Profile;
+            public string LinkRelation;
             public Type SourceType;
             public Type TargetType;
             public Func<object, object> Parse;
         }
 
-        private class ActionKey
+        private class ActionRegistration
         {
       
-            public ActionKey()
+            public ActionRegistration()
             {
 
             }
 
-            public ActionKey(HttpResponseMessage response, string linkRelation)
+            public ActionRegistration(HttpResponseMessage response, string linkRelation)
             {
                 StatusCode = response.StatusCode;
                 if (response.Content != null)
@@ -224,11 +241,39 @@ namespace Hapikit.ResponseHandlers
 
         }
 
+        private class ActionKey
+        {
+
+            public static ActionKey CreateActionKey(HttpResponseMessage response, string linkRelation)
+            {
+                var key = new ActionKey();
+                key.StatusCode = response.StatusCode;
+                if (response.Content != null)
+                {
+                    key.ContentType = response.Content.Headers.ContentType;
+                    // Hunt for profile (m/t Parameters, Link Header)
+
+                    var profile = key.ContentType.Parameters.FirstOrDefault(p => p.Name == "profile");
+                    if (profile != null)
+                    {
+                        key.Profile = new Uri(profile.Value.Substring(1, profile.Value.Length - 2));
+                    }
+                }
+                key.LinkRelation = linkRelation;
+                return key;
+            }
+            public HttpStatusCode StatusCode { get; set; }
+            public MediaTypeHeaderValue ContentType { get; set; }
+            public Uri Profile { get; set; }
+            public string LinkRelation { get; set; }
+        }
+
         private class HandlerResult
         {
             public int Score { get; set; }
             public ResponseAction<T> ResponseAction { get; set; }
         }
+
 
 
     }

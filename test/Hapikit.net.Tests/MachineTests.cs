@@ -209,7 +209,7 @@ namespace LinkTests
             });
 
             // Define method to translate media type DOM into application domain object instance based on profile
-            machine.AddProfileParser<JToken, Person>(new Uri("http://example.org/person"), (jt) =>
+            machine.AddLinkRelationParser<JToken, Person>("person-link", (jt) =>
             {
                 var person = new Person();
                 var jobject = (JObject)jt;
@@ -225,8 +225,7 @@ namespace LinkTests
             // Create a sample body
             var jsonContent = new StringContent("{ \"FirstName\" : \"Bob\", \"LastName\" : \"Bang\"  }");
             jsonContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            jsonContent.Headers.ContentType.Parameters.Add(new NameValueHeaderValue("profile", "\"http://example.org/person\""));
-
+      
             // Create a sample response 
             var httpResponseMessage = new HttpResponseMessage()
             {
@@ -234,7 +233,7 @@ namespace LinkTests
             };
 
             // Allow machine to dispatch response
-            machine.HandleResponseAsync("", httpResponseMessage);
+            machine.HandleResponseAsync("person-link", httpResponseMessage);
 
             Assert.NotNull(testPerson);
             Assert.Equal("Bob", testPerson.FirstName);
