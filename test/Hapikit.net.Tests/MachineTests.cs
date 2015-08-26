@@ -197,9 +197,9 @@ namespace LinkTests
         [Fact]
         public async Task DispatchBasedOnStatusCodeAndLinkRelationAndParseProfile()
         {
-            Person testPerson = null;
+            Model<Person> test = new Model<Person>();
 
-            var machine = new HttpResponseMachine();
+            var machine = new HttpResponseMachine<Model<Person>>(test);
 
             // Define method to translate response body into DOM for specified media type 
             machine.AddMediaTypeParser<JToken>("application/json", async (content) =>
@@ -220,7 +220,7 @@ namespace LinkTests
             });
 
             // Define action in HttpResponseMachine for all responses that return 200 OK and can be translated somehow to a Person
-            machine.AddResponseAction<Person>((l, p) => { testPerson = p; }, HttpStatusCode.OK);
+            machine.AddResponseAction<Person>((m, l, p) => { m.Value = p; }, HttpStatusCode.OK);
 
             // Create a sample body
             var jsonContent = new StringContent("{ \"FirstName\" : \"Bob\", \"LastName\" : \"Bang\"  }");
@@ -235,9 +235,9 @@ namespace LinkTests
             // Allow machine to dispatch response
             machine.HandleResponseAsync("person-link", httpResponseMessage);
 
-            Assert.NotNull(testPerson);
-            Assert.Equal("Bob", testPerson.FirstName);
-            Assert.Equal("Bang", testPerson.LastName);
+            Assert.NotNull(test.Value);
+            Assert.Equal("Bob", test.Value.FirstName);
+            Assert.Equal("Bang", test.Value.LastName);
         }
 
 
