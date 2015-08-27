@@ -150,18 +150,17 @@ namespace LinkTests
         public async Task DispatchBasedOnStatusCodeMediaTypeAndProfile()
         {
             Person testPerson = null;
-            
-            var machine = new HttpResponseMachine();
 
+            var parserStore = new ParserStore();
             // Define method to translate response body into DOM for specified media type 
-            machine.AddMediaTypeParser<JToken>("application/json", async (content) =>
+            parserStore.AddMediaTypeParser<JToken>("application/json", async (content) =>
             {
                 var stream = await content.ReadAsStreamAsync();
                 return JToken.Load(new JsonTextReader(new StreamReader(stream)));
             });
 
             // Define method to translate media type DOM into application domain object instance based on profile
-            machine.AddProfileParser<JToken, Person>(new Uri("http://example.org/person"), (jt) =>
+            parserStore.AddProfileParser<JToken, Person>(new Uri("http://example.org/person"), (jt) =>
             {
                 var person = new Person();
                 var jobject = (JObject)jt;
@@ -170,6 +169,8 @@ namespace LinkTests
 
                 return person;
             });
+
+            var machine = new HttpResponseMachine(parserStore);
 
             // Define action in HttpResponseMachine for all responses that return 200 OK and can be translated somehow to a Person
             machine.AddResponseAction<Person>((l, p) => { testPerson = p; }, HttpStatusCode.OK);
@@ -199,17 +200,16 @@ namespace LinkTests
         {
             Model<Person> test = new Model<Person>();
 
-            var machine = new HttpResponseMachine<Model<Person>>(test);
-
+            var parserStore = new ParserStore();
             // Define method to translate response body into DOM for specified media type 
-            machine.AddMediaTypeParser<JToken>("application/json", async (content) =>
+            parserStore.AddMediaTypeParser<JToken>("application/json", async (content) =>
             {
                 var stream = await content.ReadAsStreamAsync();
                 return JToken.Load(new JsonTextReader(new StreamReader(stream)));
             });
 
             // Define method to translate media type DOM into application domain object instance based on profile
-            machine.AddLinkRelationParser<JToken, Person>("person-link", (jt) =>
+            parserStore.AddLinkRelationParser<JToken, Person>("person-link", (jt) =>
             {
                 var person = new Person();
                 var jobject = (JObject)jt;
@@ -218,6 +218,9 @@ namespace LinkTests
 
                 return person;
             });
+
+            var machine = new HttpResponseMachine<Model<Person>>(test,parserStore);
+
 
             // Define action in HttpResponseMachine for all responses that return 200 OK and can be translated somehow to a Person
             machine.AddResponseAction<Person>((m, l, p) => { m.Value = p; }, HttpStatusCode.OK);
@@ -247,13 +250,16 @@ namespace LinkTests
         {
             JToken value = null;
 
-            var machine = new HttpResponseMachine();
+            var parserStore = new ParserStore();
 
-            machine.AddMediaTypeParser<JToken>("application/json", async (content) =>
+            parserStore.AddMediaTypeParser<JToken>("application/json", async (content) =>
             {
                 var stream = await content.ReadAsStreamAsync();
                 return JToken.Load(new JsonTextReader(new StreamReader(stream)));
             });
+
+            var machine = new HttpResponseMachine(parserStore);
+
             machine.AddResponseAction<JToken>((l, jt) => { value = jt; }, HttpStatusCode.OK);
 
             var jsonContent = new StringContent("{ \"Hello\" : \"world\" }");

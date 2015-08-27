@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Hapikit.Links;
-using Hapikit.RequestBuilders;
 
 namespace Hapikit.ResponseHandlers
 {
@@ -14,8 +13,8 @@ namespace Hapikit.ResponseHandlers
 
     public class HttpResponseMachine : HttpResponseMachine<object>
     {
-        public HttpResponseMachine()
-            : base(null)
+        public HttpResponseMachine(ParserStore parserStore = null) 
+            : base(null,parserStore)
         {
         }
 
@@ -36,12 +35,18 @@ namespace Hapikit.ResponseHandlers
     {
         private readonly T _Model;
         private readonly List<ActionRegistration> _ResponseActions = new List<ActionRegistration>();
-        private ParserStore _ParserStore = new ParserStore();
+        private readonly ParserStore _ParserStore;
         
         public delegate Task ResponseAction<T>(T clientstate, string linkRelation, HttpResponseMessage response);
 
-        public HttpResponseMachine(T model)
+        public HttpResponseMachine(T model, ParserStore parserStore = null)
         {
+            if (parserStore == null)
+            {
+                parserStore = new ParserStore();
+            }
+
+            _ParserStore = parserStore;
             _Model = model;
         }
 
@@ -155,22 +160,6 @@ namespace Hapikit.ResponseHandlers
                }
 
            }
-       }
-
-       public void AddMediaTypeParser<Target>(string mediaType, Func<HttpContent, Task<Target>> translator) where Target:class
-        {
-            _ParserStore.AddMediaTypeParser<Target>(mediaType, translator);
-        }
-
-       public void AddProfileParser<Source,Target>(Uri profile, Func<Source, Target> translator) where Target : class
-       {
-           _ParserStore.AddProfileParser<Source, Target>(profile, translator);
-       }
-
-       public void AddLinkRelationParser<Source, Target>(string linkrelation, Func<Source, Target> translator) where Target : class
-       {
-           _ParserStore.AddLinkRelationParser<Source, Target>(linkrelation, translator);
-         
        }
     
         private class ActionRegistration
