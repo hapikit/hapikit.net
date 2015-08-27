@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Hapikit.Links;
+using Hapikit.RequestBuilders;
 
 namespace Hapikit.ResponseHandlers
 {
@@ -35,9 +36,7 @@ namespace Hapikit.ResponseHandlers
     {
         private readonly T _Model;
         private readonly List<ActionRegistration> _ResponseActions = new List<ActionRegistration>();
-        protected Dictionary<string, ParserInfo> _MediaTypeParsers = new Dictionary<string, ParserInfo>();
-        protected Dictionary<string, AppSemanticsParserInfo> _AppSemanticParsers = new Dictionary<string, AppSemanticsParserInfo>();
-
+        private ParserStore _ParserStore = new ParserStore();
         
         public delegate Task ResponseAction<T>(T clientstate, string linkRelation, HttpResponseMessage response);
 
@@ -82,8 +81,6 @@ namespace Hapikit.ResponseHandlers
             return selectedAction;
         }
 
-       
-
         private HttpStatusCode GetDefaultStatusCode(HttpStatusCode httpStatusCode)
         {
             if ((int)httpStatusCode < 200)
@@ -126,18 +123,26 @@ namespace Hapikit.ResponseHandlers
        public void AddResponseAction<Target>(Action<T,string, Target> responseAction, HttpStatusCode statusCode, string linkRelation = null)
        {
            // Look for media type translator for this target type
-           var mediaTypeParsers = _MediaTypeParsers.Values.Where(pi => pi.TargetType == typeof(Target)).ToList();
+           var mediaTypeParsers = _ParserStore.GetMediaTypeParsers<Target>();
 
-           if (!mediaTypeParsers.Any())
+           if (mediaTypeParsers.Any())
+           {
+               foreach (var parserInfo in mediaTypeParsers)
+               {
+                   var p = parserInfo;
+                   AddResponseAction(async (m, l, r) =>
+                   {
+                       var target = await p.Parse(r.Content);
+                       responseAction(m, l, (Target)target);
+                   }, statusCode, linkRelation: linkRelation, contentType: new MediaTypeHeaderValue(parserInfo.MediaType));
+               }
+           }
+           else
            {
                // Find AppSemantic parsers for the target type
-               var doubleParsers = _AppSemanticParsers.Values
-                   .Where(pi => pi.TargetType == typeof(Target) && (linkRelation == null || linkRelation == pi.LinkRelation))
-                   .SelectMany(
-                                   pp => _MediaTypeParsers.Values.Where(pi => pi.TargetType == pp.SourceType)
-                                       .Select(mt => new { MediaTypeParser = mt, ProfileParser = pp }));
+               var semanticParsers = _ParserStore.GetSemanticParsers<Target>(linkRelation);
 
-               foreach (var parserInfo in doubleParsers)
+               foreach (var parserInfo in semanticParsers)
                {
                    this.AddResponseAction(async (m, l, r) =>
                    {
@@ -150,72 +155,24 @@ namespace Hapikit.ResponseHandlers
                }
 
            }
-
-           foreach (var parserInfo in mediaTypeParsers)
-           {
-               var p = parserInfo;
-               this.AddResponseAction(async (m, l, r) =>
-               {
-                   var target = await p.Parse(r.Content);
-                   responseAction(m,l, (Target)target);
-
-               }, statusCode, linkRelation: linkRelation, contentType: new MediaTypeHeaderValue(parserInfo.MediaType));
-
-           }
-
        }
-
-
 
        public void AddMediaTypeParser<Target>(string mediaType, Func<HttpContent, Task<Target>> translator) where Target:class
         {
-            _MediaTypeParsers[mediaType] = new ParserInfo
-            {
-                MediaType = mediaType,
-                TargetType = typeof(Target),
-                Parse = async (c) => await translator(c)
-            }; 
+            _ParserStore.AddMediaTypeParser<Target>(mediaType, translator);
         }
 
        public void AddProfileParser<Source,Target>(Uri profile, Func<Source, Target> translator) where Target : class
        {
-           _AppSemanticParsers[profile.AbsoluteUri] = new AppSemanticsParserInfo
-           {
-               Profile = profile,
-               SourceType = typeof(Source),
-               TargetType = typeof(Target),
-               Parse = (s) => translator((Source)s)
-           };
+           _ParserStore.AddProfileParser<Source, Target>(profile, translator);
        }
 
        public void AddLinkRelationParser<Source, Target>(string linkrelation, Func<Source, Target> translator) where Target : class
        {
-           _AppSemanticParsers[linkrelation] = new AppSemanticsParserInfo
-           {
-               LinkRelation = linkrelation,
-               SourceType = typeof(Source),
-               TargetType = typeof(Target),
-               Parse = (s) => translator((Source)s)
-           };
+           _ParserStore.AddLinkRelationParser<Source, Target>(linkrelation, translator);
+         
        }
     
-        protected struct ParserInfo
-        {
-            public string MediaType;
-            public string Profile;
-            public Type TargetType;
-            public Func<HttpContent, Task<object>> Parse;
-        }
-        
-        protected struct AppSemanticsParserInfo
-        {
-            public Uri Profile;
-            public string LinkRelation;
-            public Type SourceType;
-            public Type TargetType;
-            public Func<object, object> Parse;
-        }
-
         private class ActionRegistration
         {
       

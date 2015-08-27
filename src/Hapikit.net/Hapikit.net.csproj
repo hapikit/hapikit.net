@@ -70,6 +70,7 @@
     <Compile Include="Links\ILink.cs" />
     <Compile Include="Links\ILinkFactory.cs" />
     <Compile Include="RequestBuilders\IRequestFactory.cs" />
+    <Compile Include="ResponseHandlers\ParserStore.cs" />
     <Compile Include="ResponseHandlers\IResponseHandler.cs" />
     <Compile Include="Links\Hint.cs" />
     <Compile Include="Links\HintFactory.cs" />
