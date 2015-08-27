@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>Hapikit.net</id>
-        <version>0.1.0-alpha3</version>
+        <version>0.1.0-alpha4</version>
         <authors>Darrel Miller</authors>
         <owners>Darrel Miller</owners>
         <projectUrl>https://github.com/hapikit/hapikit.net</projectUrl>
