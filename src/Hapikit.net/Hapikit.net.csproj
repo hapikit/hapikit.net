@@ -69,6 +69,14 @@
     <Compile Include="Cache\InMemoryContentStore.cs" />
     <Compile Include="Links\ILink.cs" />
     <Compile Include="Links\ILinkFactory.cs" />
+    <Compile Include="Links\OAuth2\AzureOAuthTokenLink.cs" />
+    <Compile Include="Links\OAuth2\OAuth2AuthorizeLink.cs" />
+    <Compile Include="Links\OAuth2\OAuth2Error.cs" />
+    <Compile Include="Links\OAuth2\Oauth2Token.cs" />
+    <Compile Include="Links\OAuth2\OAuth2TokenLink.cs" />
+    <Compile Include="Parser\Context.cs" />
+    <Compile Include="Parser\JsonStreamingParser.cs" />
+    <Compile Include="Parser\Vocabulary.cs" />
     <Compile Include="RequestBuilders\IRequestFactory.cs" />
     <Compile Include="ResponseHandlers\ParserStore.cs" />
     <Compile Include="ResponseHandlers\IResponseHandler.cs" />
@@ -104,6 +112,8 @@
     <Compile Include="Templates\UriTemplate.cs" />
     <Compile Include="Templates\UriTemplateExtensions.cs" />
     <Compile Include="Templates\VarSpec.cs" />
+    <Compile Include="Vocabularies\OpenApiDocument.cs" />
+    <Compile Include="Vocabularies\OpenApiVocab.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -116,6 +126,19 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.7.0.1\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Diagnostics.DiagnosticSource.4.0.0-beta-23516\lib\portable-net45+win8+wp8+wpa81\System.Diagnostics.DiagnosticSource.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

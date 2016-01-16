@@ -35,7 +35,7 @@ namespace LinkTests
 
 
         [Fact]
-        public void Foo()
+        public void MakeTemplateFromParameters()
         {
             var foo = new Foo()
             {
