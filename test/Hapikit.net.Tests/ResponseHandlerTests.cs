@@ -21,7 +21,8 @@ namespace LinkTests
 
             var notFoundHandler = new NotFoundHandler(new OkHandler(null));
             var machine = new HttpResponseMachine();
-            machine.AddResponseAction(async (l, r) => { notFoundHandler.HandleResponseAsync(l, r); }, HttpStatusCode.NotFound);
+            machine.When(HttpStatusCode.NotFound)
+                .Then(async (l, r) => { notFoundHandler.HandleResponseAsync(l, r); });
 
             var client = new HttpClient(new FakeHandler() {Response = new HttpResponseMessage() {StatusCode = HttpStatusCode.NotFound}});
 
@@ -57,8 +58,9 @@ namespace LinkTests
             var responseMachine = new HttpResponseMachine();
             
             var notFoundHandler = new NotFoundHandler(new OkHandler(null));
-            responseMachine.AddResponseAction((l,r) => notFoundHandler.HandleResponseAsync(l,r), HttpStatusCode.NotFound);
-
+            responseMachine
+                .When(HttpStatusCode.NotFound)
+                .Then((l,r) => notFoundHandler.HandleResponseAsync(l,r));
 
             var client = new HttpClient(new FakeHandler() { Response = new HttpResponseMessage() { StatusCode = HttpStatusCode.NotFound } });
 

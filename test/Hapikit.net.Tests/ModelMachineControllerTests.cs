@@ -26,11 +26,22 @@ namespace LinkTests
         {
             _loginFormModel = model;
             Machine = new HttpResponseMachine();
-            Machine.AddResponseAction(LoginSuccessful, HttpStatusCode.OK, linkRelation: "login", contentType: null, profile: null);
-            Machine.AddResponseAction(LoginFailed, HttpStatusCode.Unauthorized, linkRelation: "login", contentType: null, profile: null);
-            Machine.AddResponseAction(LoginForbidden, HttpStatusCode.Forbidden, linkRelation: "login", contentType: null, profile: null);
-            Machine.AddResponseAction(FailedRequest, HttpStatusCode.BadRequest, linkRelation: "login", contentType: null, profile: null);
-            Machine.AddResponseAction(ResetForm, HttpStatusCode.OK, linkRelation: "reset", contentType: null, profile: null);
+
+            Machine
+                .When(HttpStatusCode.OK, linkRelation: "login", contentType: null, profile: null)
+                .Then(LoginSuccessful);
+
+            Machine.When(HttpStatusCode.Unauthorized, linkRelation: "login", contentType: null, profile: null)
+                .Then(LoginFailed);
+
+            Machine.When(HttpStatusCode.Forbidden, linkRelation: "login", contentType: null, profile: null)
+                .Then(LoginForbidden);
+
+            Machine.When(HttpStatusCode.BadRequest, linkRelation: "login", contentType: null, profile: null)
+                .Then(FailedRequest);
+
+            Machine.When(HttpStatusCode.OK, linkRelation: "reset", contentType: null, profile: null)
+                .Then(ResetForm);
 
         }
 

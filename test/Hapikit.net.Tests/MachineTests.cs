@@ -23,7 +23,8 @@ namespace LinkTests
             bool notfound = false;
             var machine = new HttpResponseMachine();
 
-            machine.AddResponseAction(async (l, r) => { notfound = true; }, HttpStatusCode.NotFound);
+            machine.When(HttpStatusCode.NotFound)
+                .Then(async (l, r) => { notfound = true; });
 
             await machine.HandleResponseAsync("", new HttpResponseMessage(HttpStatusCode.NotFound));
 
@@ -36,7 +37,8 @@ namespace LinkTests
             bool badrequest = false;
             var machine = new HttpResponseMachine();
 
-            machine.AddResponseAction(async (l, r) => { badrequest = true; }, HttpStatusCode.BadRequest);
+            machine.When(HttpStatusCode.BadRequest)
+                .Then(async (l, r) => { badrequest = true; });
 
             await machine.HandleResponseAsync("", new HttpResponseMessage(HttpStatusCode.ExpectationFailed));
 
@@ -49,7 +51,8 @@ namespace LinkTests
             bool ok = false;
             var machine = new HttpResponseMachine();
 
-            machine.AddResponseAction(async (l, r) => { ok = true; }, System.Net.HttpStatusCode.OK);
+            machine.When(HttpStatusCode.OK)
+                .Then(async (l, r) => { ok = true; });
 
             await machine.HandleResponseAsync("", new HttpResponseMessage(HttpStatusCode.OK));
 
@@ -63,13 +66,15 @@ namespace LinkTests
             JToken root = null;
             var machine = new HttpResponseMachine();
 
-            machine.AddResponseAction(async (l, r) =>
+            machine.When(HttpStatusCode.OK, null, new MediaTypeHeaderValue("application/json"))
+                .Then(async (l, r) =>
             {
                 var text = await r.Content.ReadAsStringAsync();
                 root = JToken.Parse(text);
-            },HttpStatusCode.OK,null, new MediaTypeHeaderValue("application/json"));
+            });
 
-            machine.AddResponseAction(async (l, r) => { }, HttpStatusCode.OK, null,new MediaTypeHeaderValue("application/xml"));
+            machine.When(HttpStatusCode.OK, null, new MediaTypeHeaderValue("application/xml"))
+                .Then(async (l, r) => { });
 
             var byteArrayContent = new ByteArrayContent(Encoding.UTF8.GetBytes("{\"hello\" : \"world\"}"));
             byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -86,21 +91,23 @@ namespace LinkTests
         public async Task Handle200AndContentTypeUsingTypedMachine()
         {
             // Arrange
-            var model = new Model<JToken>
+            var appmodel = new Model<JToken>
             {
                 Value = null
             };
 
-            var machine = new HttpResponseMachine<Model<JToken>>(model);
+            var machine = new HttpResponseMachine<Model<JToken>>(appmodel);
 
-            machine.AddResponseAction(async (m, l, r) =>
-            {
-                var text = await r.Content.ReadAsStringAsync();
-                m.Value = JToken.Parse(text);
-            }, HttpStatusCode.OK, null,new MediaTypeHeaderValue("application/json"));
+            machine.When(HttpStatusCode.OK, null, new MediaTypeHeaderValue("application/json"))
+                   .Then(async (model, linkrelation, response) =>
+                                {
+                                    var text = await response.Content.ReadAsStringAsync();
+                                    model.Value = JToken.Parse(text);
+                                });
+      
+            machine.When(HttpStatusCode.OK, null, new MediaTypeHeaderValue("application/xml"))
+                   .Then(async (m, l, r) => { });
 
-
-            machine.AddResponseAction(async (m, l, r) => { }, HttpStatusCode.OK, null,new MediaTypeHeaderValue("application/xml"));
 
             var byteArrayContent = new ByteArrayContent(Encoding.UTF8.GetBytes("{\"hello\" : \"world\"}"));
             byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -109,7 +116,7 @@ namespace LinkTests
             await machine.HandleResponseAsync("", new HttpResponseMessage(HttpStatusCode.OK) { Content = byteArrayContent });
 
             // Assert
-            Assert.NotNull(model.Value);
+            Assert.NotNull(appmodel.Value);
         }
 
 
@@ -121,20 +128,23 @@ namespace LinkTests
             var machine = new HttpResponseMachine();
 
             // Fallback handler
-            machine.AddResponseAction(async (l, r) =>
-            {
-                var text = await r.Content.ReadAsStringAsync();
-                root = JToken.Parse(text);
-            }, HttpStatusCode.OK); 
+            machine.When(HttpStatusCode.OK)
+                    .Then(async (l, r) =>
+                    {
+                        var text = await r.Content.ReadAsStringAsync();
+                        root = JToken.Parse(text);
+                    });
 
             // More specific handler
-            machine.AddResponseAction(async (l, r) =>
+            machine.When(HttpStatusCode.OK, linkRelation: "foolink", contentType: new MediaTypeHeaderValue("application/json"), profile: null)
+                .Then(async (l, r) =>
             {
                 var text = await r.Content.ReadAsStringAsync();
                 root = JToken.Parse(text);
-            }, HttpStatusCode.OK,linkRelation: "foolink", contentType: new MediaTypeHeaderValue("application/json"), profile: null);
+            });
 
-            machine.AddResponseAction(async (l, r) => { }, HttpStatusCode.OK, linkRelation: "foolink", contentType: new MediaTypeHeaderValue("application/xml"), profile: null);
+            machine.When(HttpStatusCode.OK, linkRelation: "foolink", contentType: new MediaTypeHeaderValue("application/xml"), profile: null)
+                .Then(async (l, r) => { });
 
             var byteArrayContent = new ByteArrayContent(Encoding.UTF8.GetBytes("{\"hello\" : \"world\"}"));
             byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -173,7 +183,10 @@ namespace LinkTests
             var machine = new HttpResponseMachine(parserStore);
 
             // Define action in HttpResponseMachine for all responses that return 200 OK and can be translated somehow to a Person
-            machine.AddResponseAction<Person>((l, p) => { testPerson = p; }, HttpStatusCode.OK);
+            machine
+                .When(HttpStatusCode.OK)
+                .Then<Person>((m, l, p) => { testPerson = p; });
+
 
             // Create a sample body
             var jsonContent = new StringContent("{ \"FirstName\" : \"Bob\", \"LastName\" : \"Bang\"  }");
@@ -223,7 +236,8 @@ namespace LinkTests
 
 
             // Define action in HttpResponseMachine for all responses that return 200 OK and can be translated somehow to a Person
-            machine.AddResponseAction<Person>((m, l, p) => { m.Value = p; }, HttpStatusCode.OK);
+            machine.When(HttpStatusCode.OK)
+                   .Then<Person>((m, l, p) => { m.Value = p; });
 
             // Create a sample body
             var jsonContent = new StringContent("{ \"FirstName\" : \"Bob\", \"LastName\" : \"Bang\"  }");
@@ -260,7 +274,8 @@ namespace LinkTests
 
             var machine = new HttpResponseMachine(parserStore);
 
-            machine.AddResponseAction<JToken>((l, jt) => { value = jt; }, HttpStatusCode.OK);
+            machine.When(HttpStatusCode.OK)
+                .Then<JToken>((m, l, jt) => { value = jt; } );
 
             var jsonContent = new StringContent("{ \"Hello\" : \"world\" }");
             jsonContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");

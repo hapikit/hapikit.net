@@ -119,7 +119,8 @@ namespace LinkTests
 
             var uri = string.Empty;
             var machine = new HttpResponseMachine();
-            machine.AddResponseAction(async (rel,r) => {uri = r.RequestMessage.RequestUri.AbsoluteUri; }, HttpStatusCode.OK);
+            machine.When(HttpStatusCode.OK)
+                .Then(async (rel,r) => {uri = r.RequestMessage.RequestUri.AbsoluteUri; });
             await client.FollowLinkAsync(link,machine);
 
             Assert.Equal("http://localhost/", uri);

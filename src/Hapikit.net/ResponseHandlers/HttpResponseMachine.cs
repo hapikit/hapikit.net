@@ -17,18 +17,6 @@ namespace Hapikit.ResponseHandlers
             : base(null,parserStore)
         {
         }
-
-        public void AddResponseAction(Func<string, HttpResponseMessage,Task> responseHandler, HttpStatusCode statusCode, string linkRelation = null, MediaTypeHeaderValue contentType = null, Uri profile = null)
-        {
-            // Ignore model parameter
-            this.AddResponseAction((m, l, r) => responseHandler(l, r), statusCode, linkRelation: linkRelation, contentType: contentType, profile: profile);
-        }
-
-        public void AddResponseAction<Target>(Action<string, Target> responseAction, HttpStatusCode statusCode, string linkRelation = null)
-        {
-            // Ignore model parameter
-            this.AddResponseAction<Target>((m, l, r) => responseAction(l, r), statusCode, linkRelation: linkRelation);
-        }
     }
 
     public class HttpResponseMachine<T> : IResponseHandler
@@ -59,6 +47,18 @@ namespace Hapikit.ResponseHandlers
             await selectedAction.ResponseAction(_Model, linkrelation, response);
 
             return response;
+        }
+
+        public IActionRegistrationBuilder When(HttpStatusCode statusCode, string linkRelation = null, MediaTypeHeaderValue contentType = null, Uri profile = null)
+        {
+            var key = new ActionKey()
+            {
+                StatusCode = statusCode,
+                ContentType = contentType,
+                Profile = profile,
+                LinkRelation = linkRelation,
+            };
+            return new ActionRegistrationBuilder(key, this);
         }
 
         private SearchResult FindBestMatchAction(ActionKey actionKey)
@@ -110,58 +110,91 @@ namespace Hapikit.ResponseHandlers
             }
         }
 
-
-       public void AddResponseAction(ResponseAction<T> responseAction, HttpStatusCode statusCode, string linkRelation = null, MediaTypeHeaderValue contentType = null, Uri profile = null)
+        public interface IActionRegistrationBuilder
         {
-            var key = new ActionKey()
-            {
-                StatusCode = statusCode,
-                ContentType = contentType,
-                Profile = profile,
-                LinkRelation = linkRelation,
-            };
-            var registration = new ActionRegistration(key, responseAction);
-           
-            _ResponseActions.Add(registration);
+            void Then(ResponseAction<T> action);
+            void Then(Func<string, HttpResponseMessage, Task> action);
+            void Then<TARGET>(Action<T, string, TARGET> action);
+
         }
 
-       public void AddResponseAction<Target>(Action<T,string, Target> responseAction, HttpStatusCode statusCode, string linkRelation = null)
-       {
-           // Look for media type translator for this target type
-           var mediaTypeParsers = _ParserStore.GetMediaTypeParsers<Target>();
+        private class ActionRegistrationBuilder : IActionRegistrationBuilder  
+        {
+            private List<ActionRegistration> _Registrations = new List<ActionRegistration>();
+            private HttpResponseMachine<T> _Machine;
+            private ActionKey _ActionKey;
 
-           if (mediaTypeParsers.Any())
-           {
-               foreach (var parserInfo in mediaTypeParsers)
-               {
-                   var p = parserInfo;
-                   AddResponseAction(async (m, l, r) =>
-                   {
-                       var target = await p.Parse(r.Content);
-                       responseAction(m, l, (Target)target);
-                   }, statusCode, linkRelation: linkRelation, contentType: new MediaTypeHeaderValue(parserInfo.MediaType));
-               }
-           }
-           else
-           {
-               // Find AppSemantic parsers for the target type
-               var semanticParsers = _ParserStore.GetSemanticParsers<Target>(linkRelation);
+            public ActionRegistrationBuilder(ActionKey actionKey, HttpResponseMachine<T> machine)
+            {
+                _ActionKey = actionKey;
+                _Machine = machine;
+            }
 
-               foreach (var parserInfo in semanticParsers)
-               {
-                   this.AddResponseAction(async (m, l, r) =>
-                   {
-                       var mt = await parserInfo.MediaTypeParser.Parse(r.Content);
-                       var target = (Target)parserInfo.ProfileParser.Parse(mt);
-                       responseAction(m,l, target);
+            public void Then(ResponseAction<T> action)
+            {
+                var reg = new ActionRegistration(_ActionKey,action);
+                _Machine._ResponseActions.Add(reg);
 
-                   }, statusCode, linkRelation: parserInfo.ProfileParser.LinkRelation, contentType: new MediaTypeHeaderValue(parserInfo.MediaTypeParser.MediaType), profile: parserInfo.ProfileParser.Profile);
+            }
 
-               }
+            public void Then(Func<string, HttpResponseMessage, Task> action)
+            {
+                    var reg = new ActionRegistration(_ActionKey, (m, l, r) => action(l, r));
+                    _Machine._ResponseActions.Add(reg);
+            }
 
-           }
-       }
-    
+            public void Then<Target>(Action<T, string, Target> responseAction)
+            {
+                var regs = new List<ActionRegistration>();
+                // Look for media type translator for this target type
+                var mediaTypeParsers = _Machine._ParserStore.GetMediaTypeParsers<Target>();
+
+                if (mediaTypeParsers.Any())
+                {
+                    foreach (var parserInfo in mediaTypeParsers)
+                    {
+                        var p = parserInfo;
+                        ResponseAction<T> action = async (m, l, r) =>
+                        {
+                            var target = await p.Parse(r.Content);
+                            responseAction(m, l, (Target)target);
+                        };
+                        var registration = new ActionRegistration(_ActionKey, action);
+                        _Machine._ResponseActions.Add(registration);
+
+                    }
+                }
+                else
+                {
+                    // Find AppSemantic parsers for the target type
+                    var semanticParsers = _Machine._ParserStore.GetSemanticParsers<Target>(_ActionKey.LinkRelation);
+
+                    foreach (var parserInfo in semanticParsers)
+                    {
+                        var key = new ActionKey()
+                        {
+                            StatusCode = _ActionKey.StatusCode,
+                            ContentType = new MediaTypeHeaderValue(parserInfo.MediaTypeParser.MediaType),
+                            Profile = parserInfo.ProfileParser.Profile,
+                            LinkRelation = parserInfo.ProfileParser.LinkRelation,
+                        };
+                        ResponseAction<T> action = async (m, l, r) =>
+                        {
+                            var mt = await parserInfo.MediaTypeParser.Parse(r.Content);
+                            var target = (Target)parserInfo.ProfileParser.Parse(mt);
+                            responseAction(m, l, target);
+                        };
+
+                        var registration = new ActionRegistration(key, action);
+                        _Machine._ResponseActions.Add(registration);
+                    }
+
+                }
+
+
+            }
+        }
+
         private class ActionRegistration
         {
       
@@ -173,7 +206,6 @@ namespace Hapikit.ResponseHandlers
 
             public ActionKey Key { get; private set; }
             public ResponseAction<T> ResponseAction { get; private set; }
-
         }
 
         private class ActionKey
