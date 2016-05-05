@@ -113,6 +113,7 @@
     <Compile Include="Templates\UriTemplateExtensions.cs" />
     <Compile Include="Templates\VarSpec.cs" />
     <Compile Include="Vocabularies\ApisJson.cs" />
+    <Compile Include="Vocabularies\ApisJsonVocab.cs" />
     <Compile Include="Vocabularies\OpenApiDocument.cs" />
     <Compile Include="Vocabularies\OpenApiVocab.cs" />
   </ItemGroup>

@@ -7,8 +7,8 @@ namespace Hapikit
     {
         public object Subject { get; private set; }
         public VocabTerm TermMap { get; private set; }
-
         public string LastProperty { get; set; }
+
         public Context(object subject, VocabTerm term)
         {
             Subject = subject;
