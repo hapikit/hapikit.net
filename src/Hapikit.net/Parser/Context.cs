@@ -5,12 +5,19 @@ namespace Hapikit
 {
     public class Context
     {
-        public object Subject { get; set; }
-        public string Term { get; set; }
+        public object Subject { get; private set; }
+        public VocabTerm TermMap { get; private set; }
+
+        public string LastProperty { get; set; }
+        public Context(object subject, VocabTerm term)
+        {
+            Subject = subject;
+            TermMap = term;
+        }
 
         public override string ToString()
         {
-            return $"{Subject?.GetType().Name} : {Term}";
+            return $"{Subject?.GetType().Name} : {TermMap?.ContextTerm} -> {TermMap?.Term}";
         }
     }
 }

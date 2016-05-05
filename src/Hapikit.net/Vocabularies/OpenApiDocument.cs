@@ -7,15 +7,37 @@ using System.Threading.Tasks;
 
 namespace Hapikit
 {
-    
+    public class Schema
+    {
+
+    }
+    public class SecurityScheme
+    {
+
+    }
+    public class Tag { }
+    public class ExternalDoc { }
 
     public class OpenApiDocument 
     {
-        public string Version { get; set; }
-        public Dictionary<string,Path> Paths { get; set; }
-        public List<string> Schemes { get; set; }
-
+        public string Version { get; set; } // Swagger
         public Info Info { get; set; }
+        public string Host { get; set; }
+        public string BasePath { get; set; }
+        public List<string> Schemes { get; set; }
+        public List<string> Consumes { get; set; }
+        public List<string> Produces { get; set; }
+
+        public Dictionary<string,Path> Paths { get; set; }
+        public Dictionary<string, Schema> Definitions { get; set; }
+        public Dictionary<string, Parameter> Parameters { get; set; }
+        public Dictionary<string, Response> Responses { get; set; }
+        public Dictionary<string, SecurityScheme> SecurityDefinitions { get; set; }
+        public Dictionary<string, String[]> Security { get; set; }
+        public Dictionary<string, Tag> Tags { get; set; }
+        public Dictionary<string, ExternalDoc> ExternalDocs { get; set; }
+        public Dictionary<string, string> Extensions { get; set; }
+
 
         public OpenApiDocument()
         {
@@ -52,11 +74,31 @@ namespace Hapikit
 
     }
 
+    public class Contact
+    {
+        public string Name { get; set; }
+        public Uri Url { get; set; }
+        public string Email { get; set; }
+        public Dictionary<string,string> Extensions { get; set; }
+    }
+
+
+    public class License
+    {
+        public string Name { get; set; }
+        public Uri Url { get; set; }
+        public Dictionary<string, string> Extensions { get; set; }
+    }
+
     public class Info
     {
         public string Title { get; set; }
         public string Description { get; set; }
+        public string TermsOfService { get; set; }
+        public Contact Contact { get; set; }
+        public License License { get; set; }
         public string Version { get; set; }
+        public Dictionary<string, string> Extensions { get; set; }
     }
 
     public class Path
@@ -81,6 +123,18 @@ namespace Hapikit
     {
         public string Id { get; set; }
         public string Description { get; set; }
+        public List<Parameter> Parameters {get;set;}
+        public List<Response> Responses { get; set; }
+
+    }
+
+    public class Parameter
+    {
+
+    }
+
+    public class Response
+    {
 
     }
 }

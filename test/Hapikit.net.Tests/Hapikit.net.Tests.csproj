@@ -59,12 +59,18 @@
     <Compile Include="ResponseHandlerTests.cs" />
     <Compile Include="UriExtensionTests.cs" />
     <Compile Include="UsageTests.cs" />
+    <Compile Include="VocabBuilderTestscs.cs" />
+    <Compile Include="VocabIntegrationTests.cs" />
+    <Compile Include="VocabTermTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="forecast.io.swagger.json" />
+    <EmbeddedResource Include="apis.json" />
+    <None Include="app.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+    <EmbeddedResource Include="problem.json" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="HawkNet, Version=1.4.4.0, Culture=neutral, PublicKeyToken=840f8ba19d15c979, processorArchitecture=MSIL">
@@ -81,6 +87,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Net.Http" />
+    <Reference Include="Tavis.Problem, Version=0.8.0.29664, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Tavis.Problem.0.9.6\lib\portable-net45+sl5+wp8+win8+wpa81+MonoTouch1+MonoAndroid1\Tavis.Problem.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="xunit.abstractions">
       <HintPath>..\..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
       <Private>True</Private>

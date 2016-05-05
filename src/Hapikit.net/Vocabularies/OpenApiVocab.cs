@@ -1,68 +1,67 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace Hapikit
 {
     public static class OpenApiVocab
     {
 
-        public static Vocabulary Create()
+        public static VocabTerm<OpenApiDocument> Create()
         {
-            var vocab = new Vocabulary();
-            vocab.AddTermHandler<OpenApiDocument, string>("swagger", (s, o) =>
+            var openApiTerm = new VocabTerm<OpenApiDocument>();
+
+            openApiTerm.MapProperty<string>("swagger", (s, o) => s.Version = o);
+
+            openApiTerm.MapProperty<string>("schemes", (s, o) =>
             {
-                s.Version = o;
-            });
-            vocab.AddTermHandler<OpenApiDocument, string>("schemes", (s, o) =>
-            {
-                if (s.Schemes == null)
-                {
-                    s.Schemes = new List<String>();
-                }
+                if (s.Schemes == null) s.Schemes = new List<String>();
                 s.Schemes.Add(o);
             });
 
-            vocab.AddTermHandler("info", (c, o) =>
+            var infoTerm = new VocabTerm<Info>("info");
+            infoTerm.MapProperty<string>("description",(s,o) => s.Description = o);
+            infoTerm.MapProperty<string>("termsOfService", (s, o) => s.TermsOfService = o);
+            infoTerm.MapProperty<string>("title", (s, o) => s.Title = o);
+
+            openApiTerm.MapObject<Info>(infoTerm, (s) =>
             {
-                var sdoc = (OpenApiDocument)c.Subject;
-                sdoc.Info = new Info();
-                return new Context() { Subject = sdoc.Info, Term = "info" };
+                s.Info = new Info();
+                return s.Info;
             });
 
-            vocab.AddTermHandler("paths", (c, o) =>
+            var contactTerm = new VocabTerm<Contact>("contact");
+            infoTerm.MapObject<Contact>(contactTerm, (s) =>
             {
-                return new Context() { Subject = c.Subject, Term = "paths" };
+                s.Contact = new Contact();
+                return s.Contact;
             });
 
-            vocab.AddDefaultTermHandler("paths", (s, o) =>
-            {
-                var sdoc = (OpenApiDocument)s.Subject;
-                var path = sdoc.AddPath((string)o);
-                return new Context() { Subject = path, Term = "_path" };
+            var opsTerm = new VocabTerm<Operation>();
+            opsTerm.MapProperty<string>("operationId", (s, o) => s.Id = o);
+            //opsTerm.MapProperty<string>("x-controller", (s, o) => s. = o);
+
+            var pathTerm = new VocabTerm<Path>();
+            pathTerm.MapAnyObject<Operation>(opsTerm, (s, p) => {
+                return s.AddOperation(p, Guid.NewGuid().ToString());
             });
 
-            vocab.AddTermHandler("_path", "get", (c, o) =>
-            {
-                return new Context()
-                {
-                    Subject = (c.Subject as Path)?.AddOperation("get", ""),
-                    Term = "_operation"
-                };
-            });
-            vocab.AddTermHandler("_path", "post", (s, o) =>
-            {
-                return new Context()
-                {
-                    Subject = (s.Subject as Path)?.AddOperation("post", ""),
-                    Term = "_operation"
-                };
+            var pathsTerm = new VocabTerm<OpenApiDocument>("paths");
+
+            pathsTerm.MapAnyObject<Path>(pathTerm, (s, p) => {
+                return s.AddPath(p);
             });
 
-            vocab.AddSimpleStringTermHandler("description", "Description");
-            vocab.AddSimpleStringTermHandler("title", "Title");
-            vocab.AddSimpleStringTermHandler("operationId", "Id");
-            vocab.AddSimpleStringTermHandler("x-controller", "XController");
-            return vocab;
+            openApiTerm.MapObject<OpenApiDocument>(pathsTerm, (s) =>
+            {
+                return s;
+            });
+
+
+            return openApiTerm;
         }
+
+
     }
 }

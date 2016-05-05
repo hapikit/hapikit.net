@@ -14,6 +14,10 @@ namespace Hapikit.Tests
             this.output = output;
         }
 
+        public void Close()
+        {
+         //   this.output = null;
+        }
         public void OnCompleted()
         {
 
@@ -26,9 +30,10 @@ namespace Hapikit.Tests
 
         public void OnNext(KeyValuePair<string, object> value)
         {
-
-            this.output.WriteLine($"{value.Key} {value.Value}");
-
+            if (this.output != null)
+            {
+                this.output.WriteLine($"{value.Key} {value.Value}");
+            }
         }
     }
 }

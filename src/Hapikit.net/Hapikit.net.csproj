@@ -76,7 +76,7 @@
     <Compile Include="Links\OAuth2\OAuth2TokenLink.cs" />
     <Compile Include="Parser\Context.cs" />
     <Compile Include="Parser\JsonStreamingParser.cs" />
-    <Compile Include="Parser\Vocabulary.cs" />
+    <Compile Include="Parser\VocabTerm.cs" />
     <Compile Include="RequestBuilders\IRequestFactory.cs" />
     <Compile Include="ResponseHandlers\ParserStore.cs" />
     <Compile Include="ResponseHandlers\IResponseHandler.cs" />
@@ -112,6 +112,7 @@
     <Compile Include="Templates\UriTemplate.cs" />
     <Compile Include="Templates\UriTemplateExtensions.cs" />
     <Compile Include="Templates\VarSpec.cs" />
+    <Compile Include="Vocabularies\ApisJson.cs" />
     <Compile Include="Vocabularies\OpenApiDocument.cs" />
     <Compile Include="Vocabularies\OpenApiVocab.cs" />
   </ItemGroup>
