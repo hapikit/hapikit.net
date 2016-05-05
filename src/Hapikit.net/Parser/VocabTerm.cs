@@ -5,7 +5,6 @@ namespace Hapikit
 {
     public class VocabTerm
     {
-        public bool IsHash { get; set; } = false;
         protected Func<Context, object, Context> _DefaultChildParser;
 
         private Dictionary<string, VocabTerm> _ChildTerms = new Dictionary<string, VocabTerm>();
@@ -18,11 +17,6 @@ namespace Hapikit
         {
             Term = term;
         }
-
-        public string ContextTerm
-        {
-            get; private set;
-        } // Subject Identifer (Only used when necessary)
 
         public string Term
         {
@@ -45,18 +39,12 @@ namespace Hapikit
             }
         }
 
-        public void AddChild(string term, Func<Context, object, Context> parser)
-        {
-            var newterm = new VocabTerm(term);
-            newterm.Parser = parser;
-            _ChildTerms.Add(newterm.Term, newterm);
-        }
 
         public void AddChild(string term, VocabTerm childTerm)
         {
             _ChildTerms.Add(term, childTerm);
         }
-
+        
         internal Func<Context, object, Context> FindParser(string propertyName)
         {
             var term = Find(propertyName);
@@ -68,6 +56,17 @@ namespace Hapikit
                 return _DefaultChildParser;
             }
         }
+
+        public VocabTerm<NS> Clone<NS>(string newterm)
+        {
+            var term = new VocabTerm<NS>(newterm);
+            foreach(var ct in _ChildTerms)
+            {
+                term.AddChild(ct.Key, ct.Value);
+            }
+            return term;
+        }
+
     }
 
     public class VocabTerm<S> : VocabTerm
@@ -109,7 +108,7 @@ namespace Hapikit
 
         public void MapAnyObject<T>(VocabTerm term, Func<S,string, T> parser)
         {
-            IsHash = true;
+
             _DefaultChildParser = (c, o) => {
                 return new Context(parser((S)c.Subject,(string)o), term);
             };

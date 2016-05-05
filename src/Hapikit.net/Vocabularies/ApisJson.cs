@@ -144,14 +144,15 @@ namespace Hapikit.Vocabularies
                 return include;
             });
 
-            // Maintainers
-         
-            //vocab.MapObject<ApisJsonContact>("maintainers",contactTerm, (s) =>
-            //{
-            //    var contact = new ApisJsonContact();
-            //    s.Maintainers.Add(contact);
-            //    return contact;
-            //});
+            //Maintainers
+
+            var maintainers = contactTerm.Clone<ApisJson>("maintainers");
+            vocab.MapObject<ApisJsonContact>(maintainers, (s) =>
+             {
+                 var contact = new ApisJsonContact();
+                 s.Maintainers.Add(contact);
+                 return contact;
+             });
 
             return vocab;
         }

@@ -17,7 +17,7 @@ namespace Hapikit
 
         public override string ToString()
         {
-            return $"{Subject?.GetType().Name} : {TermMap?.ContextTerm} -> {TermMap?.Term}";
+            return $"{Subject?.GetType().Name} :  {TermMap?.Term}";
         }
     }
 }

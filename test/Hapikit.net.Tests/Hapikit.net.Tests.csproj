@@ -59,7 +59,6 @@
     <Compile Include="ResponseHandlerTests.cs" />
     <Compile Include="UriExtensionTests.cs" />
     <Compile Include="UsageTests.cs" />
-    <Compile Include="VocabBuilderTestscs.cs" />
     <Compile Include="VocabIntegrationTests.cs" />
     <Compile Include="VocabTermTests.cs" />
   </ItemGroup>
